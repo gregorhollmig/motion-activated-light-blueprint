@@ -38,19 +38,25 @@ blueprint:
           max: 100
           min: 1
           unit_of_measurement: "%"
-    evening_brightness:
-      name: Evening Brightness
-      description: What brightness should the light be set to on motion
+    night_mode_brightness:
+      name: Night Mode Brightness
+      description: What brightness should the light be set to during night mode
       default: 50
       selector:
         number:
           max: 100
           min: 1
           unit_of_measurement: "%"
-    evening_start:
-      name: Evening Start
-      description: When is the evening starting?
-      default: ""
+    night_mode_start:
+      name: Night Mode Start
+      description: When should night mode brightness begin? (e.g., evening)
+      default: "20:00:00"
+      selector:
+        time:
+    night_mode_end:
+      name: Night Mode End
+      description: When should night mode brightness end? (e.g., morning)
+      default: "07:00:00"
       selector:
         time:
     condition_block:
@@ -69,8 +75,9 @@ blueprint:
 mode: restart
 variables:
   brightness: !input brightness
-  evening_brightness: !input evening_brightness
-  evening_start: !input evening_start
+  night_mode_brightness: !input night_mode_brightness
+  night_mode_start: !input night_mode_start
+  night_mode_end: !input night_mode_end
 
 trigger:
   - platform: state
@@ -82,7 +89,20 @@ condition: !input condition_block
 action:
   - service: light.turn_on
     data:
-      brightness_pct: "{{ evening_brightness if evening_start and now() > today_at(evening_start) else brightness }}"
+      brightness_pct: >-
+        {% set start = today_at(night_mode_start) if night_mode_start else none %}
+        {% set end = today_at(night_mode_end) if night_mode_end else none %}
+        {% if start and end %}
+          {% if start > end %}
+            {# Night mode spans midnight (e.g., 20:00 to 07:00) #}
+            {{ night_mode_brightness if now() >= start or now() < end else brightness }}
+          {% else %}
+            {# Night mode within same day (e.g., 22:00 to 23:00) #}
+            {{ night_mode_brightness if start <= now() < end else brightness }}
+          {% endif %}
+        {% else %}
+          {{ brightness }}
+        {% endif %}
     target: !input light_target
   - wait_for_trigger:
     - platform: state
