@@ -1,6 +1,6 @@
 blueprint:
-  name: Motion activated light
-  description: Turn on a light for N minutes with X brightness when motion is detected.
+  name: Night-Aware Motion Light
+  description: Turn on a light for N minutes with X brightness, color temperature when motion is detected + night time.
   domain: automation
   author: ludeeus
   homeassistant:
@@ -22,7 +22,7 @@ blueprint:
           entity:
             domain: light
     minutes:
-      name: Minuttes
+      name: Minutes
       description: How long should the light stay on for
       default: 3
       selector:
@@ -81,7 +81,7 @@ blueprint:
         time:
     condition_block:
       name: Turn on Conditions
-      description: Add in any optional conditions that would need to be True before the action sequense runs.
+      description: Add in any optional conditions that would need to be True before the action sequence runs.
       default: []
       selector:
         condition:

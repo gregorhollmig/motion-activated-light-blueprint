@@ -1,5 +1,5 @@
 {
-    "name": "Motion activated light",
+    "name": "Night-Aware Motion Light",
     "blueprint_type": "automation",
     "filename": "motion-activated-light.yaml",
     "homeassistant": "2023.6.0"
