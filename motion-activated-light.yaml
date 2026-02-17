@@ -38,6 +38,16 @@ blueprint:
           max: 100
           min: 1
           unit_of_measurement: "%"
+    color_temp:
+      name: Default Color Temperature
+      description: Color temperature during the day (higher = cooler/bluer, lower = warmer/yellower)
+      default: 4000
+      selector:
+        number:
+          min: 2000
+          max: 6500
+          step: 100
+          unit_of_measurement: "K"
     night_mode_brightness:
       name: Night Mode Brightness
       description: What brightness should the light be set to during night mode
@@ -47,6 +57,16 @@ blueprint:
           max: 100
           min: 1
           unit_of_measurement: "%"
+    night_mode_color_temp:
+      name: Night Mode Color Temperature
+      description: Color temperature during night mode (lower = warmer, like candlelight)
+      default: 2700
+      selector:
+        number:
+          min: 2000
+          max: 6500
+          step: 100
+          unit_of_measurement: "K"
     night_mode_start:
       name: Night Mode Start
       description: When should night mode brightness begin? (e.g., evening)
@@ -75,7 +95,9 @@ blueprint:
 mode: restart
 variables:
   brightness: !input brightness
+  color_temp: !input color_temp
   night_mode_brightness: !input night_mode_brightness
+  night_mode_color_temp: !input night_mode_color_temp
   night_mode_start: !input night_mode_start
   night_mode_end: !input night_mode_end
 
@@ -92,17 +114,27 @@ action:
       brightness_pct: >-
         {% set start = today_at(night_mode_start) if night_mode_start else none %}
         {% set end = today_at(night_mode_end) if night_mode_end else none %}
+        {% set is_night_mode = false %}
         {% if start and end %}
           {% if start > end %}
-            {# Night mode spans midnight (e.g., 20:00 to 07:00) #}
-            {{ night_mode_brightness if now() >= start or now() < end else brightness }}
+            {% set is_night_mode = now() >= start or now() < end %}
           {% else %}
-            {# Night mode within same day (e.g., 22:00 to 23:00) #}
-            {{ night_mode_brightness if start <= now() < end else brightness }}
+            {% set is_night_mode = start <= now() < end %}
           {% endif %}
-        {% else %}
-          {{ brightness }}
         {% endif %}
+        {{ night_mode_brightness if is_night_mode else brightness }}
+      color_temp_kelvin: >-
+        {% set start = today_at(night_mode_start) if night_mode_start else none %}
+        {% set end = today_at(night_mode_end) if night_mode_end else none %}
+        {% set is_night_mode = false %}
+        {% if start and end %}
+          {% if start > end %}
+            {% set is_night_mode = now() >= start or now() < end %}
+          {% else %}
+            {% set is_night_mode = start <= now() < end %}
+          {% endif %}
+        {% endif %}
+        {{ night_mode_color_temp if is_night_mode else color_temp }}
     target: !input light_target
   - wait_for_trigger:
     - platform: state
